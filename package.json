@@ -1,0 +1,27 @@
+{
+  "name": "nft-marketplace-backend",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon index.ts"
+  },
+  "author": "Rihan",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "ethers": "^5.7.2",
+    "express": "^4.19.2",
+    "mongoose": "^8.4.4",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "nodemon": "^3.1.4"
+  }
+}

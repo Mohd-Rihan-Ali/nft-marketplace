@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "module": "ES2022",
+    "esModuleInterop": true,
+    "target": "esnext",
+    "noImplicitAny": false,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "outDir": "./build",
+    "rootDir": "./",
+    "skipLibCheck": true,
+    "strict": true,
+    "baseUrl": "./",
+    "paths": {
+      "*": ["node_modules/*"]
+    },
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["./**/*"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.js",
+    "build",
+    "dist",
+    "node_modules",
+    "./node_modules",
+    "./node_modules/*"
+  ],
+  "ts-node": {
+    "esm": true
+  }
+}
