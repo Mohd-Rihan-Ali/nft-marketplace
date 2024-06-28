@@ -11,7 +11,7 @@ const router = Router();
 
 router.post("/list-nft", listNft);
 
-router.post("/buy-nfg", buyNft);
+router.post("/buy-nft", buyNft);
 
 router.post("/cancel-list", cancelListing);
 
