@@ -66,43 +66,6 @@ To start the project in production mode:
 npm start
 ```
 
-## Package.json
-
-```json
-{
-  "name": "nft-marketplace-backend",
-  "version": "1.0.0",
-  "type": "module",
-  "main": "index.ts",
-  "scripts": {
-    "dev": "npx nodemon",
-    "start": "node build/index.js",
-    "build": "npx tsc -p ."
-  },
-  "author": "Rihan",
-  "license": "MIT",
-  "description": "",
-  "dependencies": {
-    "@pinata/sdk": "^2.1.0",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "ethers": "^5.7.2",
-    "express": "^4.19.2",
-    "mongoose": "^8.4.4",
-    "multer": "^1.4.5-lts.1",
-    "ts-node": "^10.9.2"
-  },
-  "devDependencies": {
-    "@types/cookie-parser": "^1.4.7",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/multer": "^1.4.11",
-    "nodemon": "^3.1.4"
-  }
-}
-```
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
