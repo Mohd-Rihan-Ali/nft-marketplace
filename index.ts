@@ -1,41 +1,42 @@
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
 import mongoose from "mongoose";
-import cookieParser from "cookie-parser";
-import routes from "./routes/MarketplaceRouter";
-
-const app = express();
-const port = 8800;
+import router from "./routes/index.js";
+import middlewares from "./middlewares/index.js";
+import { createServer } from "http";
+import connectDatabase from "./services/database.js";
 
 dotenv.config();
 
-const connect = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI as string);
-    console.log("Connected to MongoDB");
-  } catch (error) {
-    throw new Error(`Error connecting to MongoDB: ${error}`);
-  }
+const start = async () => {
+  let app = express();
+  app = middlewares(app);
+  app.use(router);
+
+  const server = createServer(app);
+  server.listen(process.env.PORT as string, async () => {
+    try {
+      await connectDatabase();
+      console.log(`🚀 Server running on port ${process.env.PORT as string}`);
+    } catch (err) {
+      gracefulShutdown();
+      console.log(err);
+    }
+  });
 };
 
-mongoose.connection.on("disconnected", (error) => {
-  console.error(`MongoDB disconnected, connection error: ${error}`);
-});
+async function gracefulShutdown() {
+  try {
+    await mongoose.connection.close();
+    console.log("Database connection closed.");
+    process.exit(0);
+  } catch (err) {
+    console.error("Error during graceful shutdown:", err);
+    process.exit(1);
+  }
+}
 
-// middlewares
-app.use(cookieParser());
-app.use(express.json());
-app.use(cors());
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);
 
-// routes
-app.use("/marketplace", routes);
-
-app.get("/", async (req, res) => {
-  res.send("heloo world");
-});
-
-app.listen(port, () => {
-  connect();
-  console.log(`Server running on port ${port}`);
-});
+start();

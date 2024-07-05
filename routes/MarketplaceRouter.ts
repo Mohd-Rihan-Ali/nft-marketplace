@@ -3,18 +3,21 @@ import {
   cancelListing,
   listNft,
   updatePrice,
-} from "../controllers/ListNftController";
-import express from "express";
+} from "../controllers/ListNftController.js";
 import { Router } from "express";
+import multer from "multer";
 
-const router = Router();
+const upload = multer();
 
-router.post("/list-nft", listNft);
+const marketplaceRouter = Router();
 
-router.post("/buy-nft", buyNft);
+marketplaceRouter.post("/list-nft", upload.none(), listNft);
+marketplaceRouter.post("/buy-nft", upload.none(), buyNft);
+marketplaceRouter.post("/cancel-list", upload.none(), cancelListing);
+marketplaceRouter.post("/update-price", upload.none(), updatePrice);
 
-router.post("/cancel-list", cancelListing);
 
-router.post("/update-list-price", updatePrice);
 
-export default router;
+// marketplaceRouter.use("/marketplace", marketplaceRouter);
+
+export default marketplaceRouter;

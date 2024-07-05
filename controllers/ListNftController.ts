@@ -1,9 +1,13 @@
+import multer from "multer";
 import dotenv from "dotenv";
 import { ethers } from "ethers";
-import { ABI } from "../ABI";
-import { Seller } from "../models/Seller";
-import { ListNFT } from "../models/ListNFT";
-import { TokenHistory } from "../models/TokenHistory";
+import { MarketplaceABI } from "../utils/marketplaceABI.js";
+import Seller from "../models/Seller.js";
+import ListNFT from "../models/ListNFT.js";
+import TokenHistory from "../models/TokenHistory.js";
+import NFTDetails from "../models/NFTDetails.js";
+import Users from "../models/Users.js";
+import { NextFunction, Request, Response } from "express";
 
 dotenv.config();
 
@@ -12,13 +16,18 @@ const provider = new ethers.providers.JsonRpcProvider(
 );
 const privateKey = process.env.PRIVATE_KEY || "";
 const signer = new ethers.Wallet(privateKey, provider);
-const contract = process.env.CONTRACT_ADDRESS
-  ? new ethers.Contract(process.env.CONTRACT_ADDRESS, ABI, signer)
+const contract = process.env.MARKETPLACE_CONTRACT_ADDRESS
+  ? new ethers.Contract(
+      process.env.MARKETPLACE_CONTRACT_ADDRESS,
+      MarketplaceABI,
+      signer
+    )
   : null;
 
-export const listNft = async (req: any, res: any) => {
-  const { tokenId, price } = req.body;
-  console.log(tokenId, price);
+const listNft = async (req: Request, res: Response, next: NextFunction) => {
+  const { isListed, tokenId } = req.body;
+  console.log("isListed: ", isListed);
+  console.log("tokenId: ", tokenId);
 
   try {
     contract?.once(
@@ -26,8 +35,10 @@ export const listNft = async (req: any, res: any) => {
       async (contractAddress, tokenId, seller, price) => {
         console.log(contractAddress, tokenId, seller, price);
 
+        const tokenIdNumber = Number(tokenId);
+
         const listNft = new ListNFT({
-          tokenId,
+          tokenId: tokenIdNumber,
           seller,
           price,
         });
@@ -37,15 +48,15 @@ export const listNft = async (req: any, res: any) => {
 
         const sellerData = await Seller.findOneAndUpdate(
           { sellerAddress: seller },
-          { tokenIds: { $push: tokenId } },
-          { upsert: true }
+          { $push: { tokenIds: tokenIdNumber } },
+          { upsert: true, new: true }
         );
         if (!sellerData) {
           throw new Error("Error creating sellerData");
         }
 
         const tokenHistory = await TokenHistory.findOneAndUpdate(
-          { tokenId: tokenId },
+          { tokenId: tokenIdNumber },
           {
             $push: {
               events: "Listed",
@@ -55,32 +66,46 @@ export const listNft = async (req: any, res: any) => {
               date: new Date().toLocaleString(),
             },
           },
-          { upsert: true }
+          { upsert: true, new: true }
         );
         if (!tokenHistory) {
           throw new Error("Error creating tokenHistory");
         }
 
+        const nftDetails = await NFTDetails.findOneAndUpdate(
+          { tokenId: tokenIdNumber },
+          { isListed: isListed },
+          { upsert: true, new: true }
+        );
+        if (!nftDetails) {
+          throw new Error("Error updating NFTDetails");
+        }
+
         await listNft.save();
         await sellerData.save();
         await tokenHistory.save();
+        await nftDetails.save();
       }
     );
     res.status(200).json({ message: "NFT listed successfully" });
   } catch (error) {
-    res.status(500).json({ message: error });
+    next(error);
   }
 };
 
-export const buyNft = async (req: any, res: any) => {
-  const { tokenId, price, buyer } = req.body;
-  console.log(tokenId, price, buyer);
+const buyNft = async (req: Request, res: Response, next: NextFunction) => {
+  const { isListed, tokenId } = req.body;
+  console.log("isListed: ", isListed);
+  console.log("tokenId: ", tokenId);
 
   try {
     contract?.once("Sale", async (contractAddress, tokenId, buyer, price) => {
       console.log(contractAddress, tokenId, buyer, price);
 
-      const listNft = await ListNFT.findOneAndDelete({ tokenId: tokenId});
+      const tokenIdNumber = tokenId.toNumber();
+      const listNft = await ListNFT.findOneAndDelete({
+        tokenId: tokenIdNumber,
+      });
       if (!listNft) {
         throw new Error("Error deleting NFT from listNft");
       }
@@ -89,8 +114,8 @@ export const buyNft = async (req: any, res: any) => {
       const newAmt = data?.sellerAmt + price;
       const sellerData = await Seller.findOneAndUpdate(
         { sellerAddress: buyer },
-        { $pull: { tokenIds: tokenId } },
-        { sellerAmt: newAmt }
+        { $pull: { tokenIds: tokenIdNumber }, $set: { sellerAmt: newAmt } },
+        { upsert: true, new: true }
       );
       if (!sellerData) {
         throw new Error("Error creating sellerData");
@@ -99,7 +124,7 @@ export const buyNft = async (req: any, res: any) => {
       const _data = await TokenHistory.findOne({ tokenId });
       const _from = _data?.from;
       const tokenHistory = await TokenHistory.findOneAndUpdate(
-        { tokenId: tokenId },
+        { tokenId: tokenIdNumber },
         {
           $push: {
             events: "Sale",
@@ -115,54 +140,120 @@ export const buyNft = async (req: any, res: any) => {
         throw new Error("Error creating tokenHistory");
       }
 
+      const nft = await NFTDetails.findOne({ tokenId: tokenIdNumber });
+      if (!nft) throw new Error("NFT not found");
+
+      if (_from !== buyer) {
+        const updateFromUser = await Users.findOneAndUpdate(
+          { accountAddress: _from },
+          { $pull: { tokens: nft._id } }
+        );
+
+        const updatedToUser = await Users.findOneAndUpdate(
+          { accountAddress: buyer },
+          { $push: { tokens: nft._id } },
+          { upsert: true, new: true }
+        );
+
+        if (!updateFromUser || !updatedToUser) {
+          throw new Error("Error updating or creating user account");
+        }
+      }
+
+      nft.history.push(buyer);
+      nft.isListed = false;
+
+      await nft.save();
+
       await sellerData.save();
       await tokenHistory.save();
+
+      console.log("nft: ", nft);
     });
     res.status(200).json({ message: "NFT bought successfully" });
   } catch (error) {
-    res.status(500).json({ message: error });
+    next(error);
   }
 };
 
-export const cancelListing = async (req: any, res: any) => {
-  const { tokenId } = req.body;
-  console.log(tokenId);
+const cancelListing = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { isListed, tokenId } = req.body;
+  console.log("isListed: ", isListed);
+  console.log("tokenId: ", tokenId);
 
   try {
     contract?.once("ListingCancelled", async (contractAddress, tokenId) => {
       console.log(contractAddress, tokenId);
 
-      const listNft = await ListNFT.findOneAndDelete({ tokenId: tokenId});
-      if (!listNft) {
-        throw new Error("Error deleting NFT from listNft");
+      const tokenIdNumber = tokenId.toNumber();
+      await ListNFT.findOneAndDelete({
+        tokenId: tokenIdNumber,
+      });
+
+      const nftDetails = await NFTDetails.findOneAndUpdate(
+        { tokenId: tokenIdNumber },
+        { isListed: isListed },
+        { upsert: true, new: true }
+      );
+      if (!nftDetails) {
+        throw new Error("Error updating NFTDetails");
       }
+
+      nftDetails.save();
+      console.log("nftDetails: ", nftDetails);
     });
     res.status(200).json({ message: "NFT listing cancelled successfully" });
   } catch (error) {
-    res.status(500).json({ message: error });
+    next(error);
   }
 };
 
-export const updatePrice = async (req: any, res: any) => {
+const updatePrice = async (req: Request, res: Response, next: NextFunction) => {
   const { tokenId, price } = req.body;
   console.log(tokenId, price);
 
   try {
-    contract?.once("PriceUpdated", async (contractAddress, tokenId, price) => {
-      console.log(tokenId, price);
+    contract?.once(
+      "PriceUpdated",
+      async (contractAddress, tokenId, newPrice) => {
+        console.log(contractAddress, tokenId, newPrice);
+        const tokenIdNumber = Number(tokenId);
 
-      const listNft = await ListNFT.findOneAndUpdate(
-        { tokenId: tokenId },
-        { price: price }
-      );
-      if (!listNft) {
-        throw new Error("Error updating price in listNft");
+        const listNft = await ListNFT.findOneAndUpdate(
+          { tokenId: tokenIdNumber },
+          { price: newPrice }
+        );
+        if (!listNft) {
+          throw new Error("Error updating listNft price");
+        }
+
+        const tokenHistory = await TokenHistory.findOneAndUpdate(
+          { tokenId: tokenIdNumber },
+          {
+            $push: {
+              events: "PriceUpdated",
+              prices: newPrice,
+              date: new Date().toLocaleString(),
+            },
+          },
+          { upsert: true }
+        );
+        if (!tokenHistory) {
+          throw new Error("Error creating tokenHistory");
+        }
+
+        await listNft.save();
+        await tokenHistory.save();
       }
-
-      await listNft.save();
-    });
+    );
     res.status(200).json({ message: "Price updated successfully" });
   } catch (error) {
-    res.status(500).json({ message: error });
+    next(error);
   }
 };
+
+export { listNft, buyNft, cancelListing, updatePrice };

@@ -8,18 +8,23 @@ const TokenHistorySchema = new mongoose.Schema({
   },
   events: {
     type: [String],
+    required: false,
   },
   prices: {
     type: [String],
+    required: false,
   },
   from: {
     type: [String],
+    required: false,
   },
   to: {
     type: [String],
+    required: false,
   },
   date: {
     type: [String],
+    required: false,
   },
   createdAt: {
     type: Date,
@@ -27,4 +32,4 @@ const TokenHistorySchema = new mongoose.Schema({
   },
 });
 
-export const TokenHistory = mongoose.model("TokenHistory", TokenHistorySchema);
+export default mongoose.model("TokenHistory", TokenHistorySchema);

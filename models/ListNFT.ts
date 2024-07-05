@@ -20,4 +20,4 @@ const ListNFTSchema = new mongoose.Schema({
   },
 });
 
-export const ListNFT = mongoose.model("ListNFT", ListNFTSchema);
+export default mongoose.model("ListNFT", ListNFTSchema);
