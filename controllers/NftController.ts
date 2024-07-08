@@ -147,12 +147,25 @@ export const NftDetails = async (
   next: NextFunction
 ) => {
   try {
+    const { tokenId } = req.params;
+    console.log("tokenId", tokenId);
+    
     const nft = await NFTDetails.findOne({ tokenId: req.params.tokenId });
     if (!nft) {
-      return res.status(404).json({ message: "NFT not found" });
+      throw new Error("NFT not found");
     }
 
-    res.status(200).json(nft);
+    const tokenHistory = await TokenHistory.findOne({ tokenId: nft.tokenId });
+    if (!tokenHistory) {
+      throw new Error("Token history not found");
+    }
+
+    const combinedResponse = {
+      nft: nft,
+      tokenHistory: tokenHistory,
+    };
+
+    res.status(200).json(combinedResponse);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }

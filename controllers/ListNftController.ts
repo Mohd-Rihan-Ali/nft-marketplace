@@ -158,6 +158,9 @@ const buyNft = async (req: Request, res: Response, next: NextFunction) => {
         if (!updateFromUser || !updatedToUser) {
           throw new Error("Error updating or creating user account");
         }
+
+        await updateFromUser.save();
+        await updatedToUser.save();
       }
 
       nft.history.push(buyer);
@@ -203,7 +206,27 @@ const cancelListing = async (
         throw new Error("Error updating NFTDetails");
       }
 
+      const _data = await TokenHistory.findOne({ tokenId });
+      const _from = _data?.from;
+      const tokenHistory = await TokenHistory.findOneAndUpdate(
+        { tokenId: tokenIdNumber },
+        {
+          $push: {
+            events: "ListingCancelled",
+            prices: "",
+            from: _from,
+            to: "",
+            date: new Date().toLocaleString(),
+          },
+        },
+        { upsert: true }
+      );
+      if (!tokenHistory) {
+        throw new Error("Error creating tokenHistory");
+      }
+
       nftDetails.save();
+      tokenHistory.save();
       console.log("nftDetails: ", nftDetails);
     });
     res.status(200).json({ message: "NFT listing cancelled successfully" });
