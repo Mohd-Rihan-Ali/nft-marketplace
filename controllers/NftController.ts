@@ -1,26 +1,14 @@
 import fs from "fs";
-import dotenv from "dotenv";
 import pinataSDK from "@pinata/sdk";
 import NFTDetails from "../models/NFTDetails.js";
 import Users from "../models/Users.js";
-import { MinterABI } from "../utils/minterABI.js";
-import { ethers } from "ethers";
 import { NextFunction, Request, Response } from "express";
 import TokenHistory from "../models/TokenHistory.js";
+import { MINTER_CONTRACT } from "../config/web3.config.js";
 
-dotenv.config();
 const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_JWT });
-const provider = new ethers.providers.JsonRpcProvider(
-  `https://sepolia.infura.io/v3/${process.env.INFURA_KEY}`
-);
 
-const signer = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
-
-const contract = new ethers.Contract(
-  process.env.MINTER_CONTRACT_ADDRESS as string,
-  MinterABI,
-  signer
-);
+const contract = MINTER_CONTRACT();
 
 export const NftStore = async (
   req: Request,
@@ -85,7 +73,7 @@ export const NftStore = async (
                 date: new Date().toLocaleString(),
               },
             },
-            { upsert: true }
+            { upsert: true, new: true }
           );
           if (!tokenHistory) {
             throw new Error("Error creating tokenHistory");
@@ -149,7 +137,7 @@ export const NftDetails = async (
   try {
     const { tokenId } = req.params;
     console.log("tokenId", tokenId);
-    
+
     const nft = await NFTDetails.findOne({ tokenId: req.params.tokenId });
     if (!nft) {
       throw new Error("NFT not found");

@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import router from "./routes/index.js";
 import middlewares from "./middlewares/index.js";
 import { createServer } from "http";
-import connectDatabase from "./services/database.js";
+import connectDatabase from "./config/database.config.js";
 
 dotenv.config();
 

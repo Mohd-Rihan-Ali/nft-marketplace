@@ -1,28 +1,13 @@
-import multer from "multer";
-import dotenv from "dotenv";
-import { ethers } from "ethers";
-import { MarketplaceABI } from "../utils/marketplaceABI.js";
 import Seller from "../models/Seller.js";
 import ListNFT from "../models/ListNFT.js";
 import TokenHistory from "../models/TokenHistory.js";
 import NFTDetails from "../models/NFTDetails.js";
 import Users from "../models/Users.js";
 import { NextFunction, Request, Response } from "express";
+import { MARKETPLACE_CONTRACT } from "../config/web3.config.js";
 
-dotenv.config();
 
-const provider = new ethers.providers.JsonRpcProvider(
-  `https://sepolia.infura.io/v3/${process.env.INFURA_KEY}`
-);
-const privateKey = process.env.PRIVATE_KEY || "";
-const signer = new ethers.Wallet(privateKey, provider);
-const contract = process.env.MARKETPLACE_CONTRACT_ADDRESS
-  ? new ethers.Contract(
-      process.env.MARKETPLACE_CONTRACT_ADDRESS,
-      MarketplaceABI,
-      signer
-    )
-  : null;
+const contract = MARKETPLACE_CONTRACT();
 
 const listNft = async (req: Request, res: Response, next: NextFunction) => {
   const { isListed, tokenId } = req.body;
