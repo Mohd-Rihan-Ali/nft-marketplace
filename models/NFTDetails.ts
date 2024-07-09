@@ -19,7 +19,6 @@ const NFTDetailsSchema = new mongoose.Schema({
   tokenId: {
     type: Number,
     required: true,
-    unique: true,
   },
 
   isListed: {

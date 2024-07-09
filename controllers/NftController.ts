@@ -25,8 +25,7 @@ export const NftStore = async (
 
   try {
     const response = await pinata.testAuthentication();
-    if (!response && account === owner)
-      throw new Error("Error authenticating with Pinata");
+    if (!response) throw new Error("Error authenticating with Pinata");
     console.log("Pinata authentication successful", response);
 
     const imagePinataResponse = await pinata.pinFileToIPFS(
@@ -42,7 +41,9 @@ export const NftStore = async (
     console.log("response:", "ipfs://" + jsonPinataResponse.IpfsHash);
 
     contract.once("Transfer", async (from, to, tokenId) => {
-      if (to === account) {
+      console.log("Transfer event:", from, to, tokenId);
+
+      try {
         const newToken = new NFTDetails({
           name: name,
           description: description,
@@ -51,39 +52,36 @@ export const NftStore = async (
             imagePinataResponse.IpfsHash,
           tokenId: parseInt(tokenId),
         });
-        try {
-          const savedToken = await newToken.save();
-          if (!savedToken) throw new Error("Error saving token");
+        if (!newToken) throw new Error("Error saving token");
 
-          const updatedUser = await Users.findOneAndUpdate(
-            { accountAddress: account },
-            { $push: { tokens: newToken._id } },
-            { upsert: true }
-          );
-          if (!updatedUser) throw new Error("Error updating user");
+        const updatedUser = await Users.findOneAndUpdate(
+          { accountAddress: account },
+          { $push: { tokens: newToken._id } },
+          { upsert: true, new: true }
+        );
+        if (!updatedUser) throw new Error("Error updating user");
 
-          const tokenHistory = await TokenHistory.findOneAndUpdate(
-            { tokenId: tokenId },
-            {
-              $push: {
-                events: "Mint",
-                prices: "",
-                from: "",
-                to: account,
-                date: new Date().toLocaleString(),
-              },
+        const tokenHistory = await TokenHistory.findOneAndUpdate(
+          { tokenId: tokenId },
+          {
+            $push: {
+              events: "Mint",
+              prices: "",
+              from: "",
+              to: account,
+              date: new Date().toLocaleString(),
             },
-            { upsert: true, new: true }
-          );
-          if (!tokenHistory) {
-            throw new Error("Error creating tokenHistory");
-          }
-
-          newToken.history.push(account);
-          await newToken.save();
-        } catch (err) {
-          console.error(`Error in Transfer event: ${err}`);
+          },
+          { upsert: true, new: true }
+        );
+        if (!tokenHistory) {
+          throw new Error("Error creating tokenHistory");
         }
+
+        newToken.history.push(account);
+        await newToken.save();
+      } catch (err) {
+        console.error(`Error in Transfer event: ${err}`);
       }
     });
     const ipfsFinalResponse = "ipfs://" + jsonPinataResponse.IpfsHash;
