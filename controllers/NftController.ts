@@ -15,7 +15,7 @@ export const NftStore = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { name, description, account, owner } = req.body;
+  const { name, description, account } = req.body;
   const file = req.file as Express.Multer.File;
 
   console.log("name", name);
@@ -80,10 +80,13 @@ export const NftStore = async (
 
         newToken.history.push(account);
         await newToken.save();
+        await updatedUser.save();
+        await tokenHistory.save();
       } catch (err) {
         console.error(`Error in Transfer event: ${err}`);
       }
     });
+
     const ipfsFinalResponse = "ipfs://" + jsonPinataResponse.IpfsHash;
     res.status(200).send({ response: ipfsFinalResponse });
   } catch (err: any) {

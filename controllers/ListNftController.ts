@@ -107,14 +107,14 @@ const buyNft = async (req: Request, res: Response, next: NextFunction) => {
       }
 
       const _data = await TokenHistory.findOne({ tokenId });
-      const _from = _data?.from;
+      const _from = _data?.from ?? [];
       const tokenHistory = await TokenHistory.findOneAndUpdate(
         { tokenId: tokenIdNumber },
         {
           $push: {
             events: "Sale",
             prices: price,
-            from: _from,
+            from: _from[_from?.length - 1],
             to: buyer,
             date: new Date().toLocaleString(),
           },
