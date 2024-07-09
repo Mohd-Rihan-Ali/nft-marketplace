@@ -67,8 +67,8 @@ export const NftStore = async (
             $push: {
               events: "Mint",
               prices: "",
-              from: "",
-              to: account,
+              from: from,
+              to: to,
               date: new Date().toLocaleString(),
             },
           },
