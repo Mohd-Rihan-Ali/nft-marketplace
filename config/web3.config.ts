@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
-import { MarketplaceABI } from "../utils/marketplaceABI.js";
-import { MinterABI } from "../utils/minterABI.js";
+import { MarketplaceABI } from "../utils/marketplaceABI";
+import { MinterABI } from "../utils/minterABI";
 import dotenv from "dotenv";
 
 dotenv.config();
