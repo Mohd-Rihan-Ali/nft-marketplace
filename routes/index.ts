@@ -1,7 +1,7 @@
 import { Router } from "express";
 
-import mintRouter from "./NftRouter.js";
-import marketplaceRouter from "./MarketplaceRouter.js";
+import mintRouter from "./NftRouter";
+import marketplaceRouter from "./MarketplaceRouter";
 
 const router = Router();
 

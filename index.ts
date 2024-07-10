@@ -1,10 +1,10 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import router from "./routes/index.js";
-import middlewares from "./middlewares/index.js";
+import router from "./routes/index";
+import middlewares from "./middlewares/index";
 import { createServer } from "http";
-import connectDatabase from "./config/database.config.js";
+import connectDatabase from "./config/database.config";
 
 dotenv.config();
 

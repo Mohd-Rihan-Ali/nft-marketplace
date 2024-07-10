@@ -1,10 +1,10 @@
-import Seller from "../models/Seller.js";
-import ListNFT from "../models/ListNFT.js";
-import TokenHistory from "../models/TokenHistory.js";
-import NFTDetails from "../models/NFTDetails.js";
-import Users from "../models/Users.js";
+import Seller from "../models/Seller";
+import ListNFT from "../models/ListNFT";
+import TokenHistory from "../models/TokenHistory";
+import NFTDetails from "../models/NFTDetails";
+import Users from "../models/Users";
 import { NextFunction, Request, Response } from "express";
-import { MARKETPLACE_CONTRACT } from "../config/web3.config.js";
+import { MARKETPLACE_CONTRACT } from "../config/web3.config";
 
 
 const contract = MARKETPLACE_CONTRACT();

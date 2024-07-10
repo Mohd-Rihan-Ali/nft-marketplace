@@ -3,7 +3,7 @@ import {
   cancelListing,
   listNft,
   updatePrice,
-} from "../controllers/ListNftController.js";
+} from "../controllers/ListNftController";
 import { Router } from "express";
 import multer from "multer";
 

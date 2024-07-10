@@ -1,10 +1,10 @@
 import fs from "fs";
 import pinataSDK from "@pinata/sdk";
-import NFTDetails from "../models/NFTDetails.js";
-import Users from "../models/Users.js";
+import NFTDetails from "../models/NFTDetails";
+import Users from "../models/Users";
 import { NextFunction, Request, Response } from "express";
-import TokenHistory from "../models/TokenHistory.js";
-import { MINTER_CONTRACT } from "../config/web3.config.js";
+import TokenHistory from "../models/TokenHistory";
+import { MINTER_CONTRACT } from "../config/web3.config";
 
 const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_JWT });
 

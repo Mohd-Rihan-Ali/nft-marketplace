@@ -5,7 +5,7 @@ import {
   NftFetchAll,
   NftStore,
   transferNft,
-} from "../controllers/NftController.js";
+} from "../controllers/NftController";
 import multer from "multer";
 
 const mintRouter = Router();
