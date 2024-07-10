@@ -45,7 +45,7 @@
   "ts-node": {
     "esm": true,
     "compilerOptions": {
-      "module": "ESNext",
+      "module": "commonjs"
     }
   }
 }
