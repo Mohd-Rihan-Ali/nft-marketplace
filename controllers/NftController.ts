@@ -5,6 +5,7 @@ import Users from "../models/Users";
 import { NextFunction, Request, Response } from "express";
 import TokenHistory from "../models/TokenHistory";
 import { MINTER_CONTRACT } from "../config/web3.config";
+import ListNFT from "../models/ListNFT";
 
 const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_JWT });
 
@@ -206,5 +207,45 @@ export const transferNft = async (
   } catch (error) {
     console.error(`Error setting up Transfer event listener: ${error}`);
     res.status(500).json({ message: "Server error setting up transfer" });
+  }
+};
+
+export const stats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const totalListedNfts = await NFTDetails.countDocuments({ isListed: true });
+    const totalNfts = await NFTDetails.countDocuments();
+    const percentListed = (totalListedNfts / totalNfts) * 100;
+
+    const totalPriceResult = await ListNFT.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: { $toDouble: "$price" } },
+        },
+      },
+    ]);
+
+    const totalPrice =
+      totalPriceResult.length > 0 ? totalPriceResult[0].total : 0;
+
+    const bestOffer = await ListNFT.find().sort({ price: 1 }).limit(1);
+    const totalUsers = await Users.countDocuments();
+
+    res.status(200).json({
+      totalListedNfts: totalListedNfts,
+      totalNfts: totalNfts,
+      percentListed: percentListed,
+      totalPrice: totalPrice,
+      bestOffer: bestOffer.length > 0 ? bestOffer[0].price : null,
+      totalUsers: totalUsers,
+    });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({ message: "Server error" });
+    next(error);
   }
 };

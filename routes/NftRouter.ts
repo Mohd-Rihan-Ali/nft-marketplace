@@ -4,6 +4,7 @@ import {
   NftFetch,
   NftFetchAll,
   NftStore,
+  stats,
   transferNft,
 } from "../controllers/NftController";
 import multer from "multer";
@@ -21,6 +22,6 @@ mintRouter.get("/nfts/nft/:tokenId", NftDetails);
 
 mintRouter.post("/transfer", transferNft);
 
-// mintRouter.use("/", mintRouter);
+mintRouter.get("/stats", stats);
 
 export default mintRouter;
